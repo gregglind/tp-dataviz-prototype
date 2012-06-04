@@ -9,11 +9,11 @@
 }
 
 .chart .dataset-1 {
-    fill: red;
+    fill: blue; 
 }
 
 .chart .dataset-2 {
-    fill: blue;
+    fill: red;
 }
 
 .chart .dataset-3 {
@@ -36,6 +36,10 @@
     fill: grey;
 }
 
+.chart circle {
+    opacity: 0.1;
+}
+
 .y.axis line, .y.axis path {
   fill: none;
   stroke: #000;
@@ -44,4 +48,25 @@
 .x.axis line, .x.axis path {
   fill: none;
   stroke: #000;
+}
+
+.dragtarget-hover {
+  background-color: blue;
+  color: white;
+}
+
+#x-axis-scale {
+  display: none;
+}
+
+#x-axis-sort {
+  display: none;
+}
+
+#y-axis-scale {
+  display: none;
+}
+
+#y-axis-sort {
+  display: none;
 }

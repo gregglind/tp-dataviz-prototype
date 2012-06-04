@@ -53,12 +53,11 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="#">Blank Tabs Study</a>
+          <a class="brand" href="#">Desktop Heatmap 2012 Study</a>
           <div class="nav-collapse">
             <ul class="nav">
               <li class="active"><a href="#">Chart Builder</a></li>
-              <li><a href="#about">Help</a></li>
-              <li><a href="#contact">Contact</a></li>
+              <li class="active"><a href="#">Please send bug reports to jono@mozilla.com</a></li>
             </ul>
             <p class="navbar-text pull-right">Logged in as <a href="#">UX</a></p>
           </div><!--/.nav-collapse -->
@@ -69,7 +68,7 @@
 
     <div class="container-fluid">
       <div class="row-fluid">
-        <div class="span3">
+        <div class="span2">
           <div class="well sidebar-nav">
             <ul class="nav nav-list" id="variables_menu">
               <li class="nav-header" >ingredients</li>
@@ -78,9 +77,29 @@
           </div><!--/.well -->
         </div><!--/span-->
 
-        <div class="span3">
-          <div class="dragtarget" id="x-axis-target">X-axis <span class="valbox"></span></div>
-          <div class="dragtarget" id="y-axis-target">Y-axis <span class="valbox"></span></div>
+        <div class="span2" id="drop-targets-container">
+          <div class="dragtarget" id="x-axis-target">X-axis <span class="valbox"></span>
+            <span id="x-axis-scale">Scale: <select id="x-axis-scale-menu">
+              <option>Linear</option>
+              <option>Logarithmic</option>
+            </select></span>
+            <span id="x-axis-sort">Sorted by: <select id="x-axis-sort">
+              <option>Default</option>
+              <option>Most to Least</option>
+              <option>Alphabetical</option>
+            </select></span>
+          </div>
+          <div class="dragtarget" id="y-axis-target">Y-axis <span class="valbox"></span>
+            <span id="y-axis-scale">Scale: <select id="y-axis-scale">
+              <option>Linear</option>
+              <option>Logarithmic</option>
+            </select></span>
+            <span id="y-axis-sort">Sorted by: <select id="y-axis-sort">
+              <option>Default</option>
+              <option>Most to Least</option>
+              <option>Alphabetical</option>
+            </select></span>
+          </div>
           <div class="dragtarget" id="color-target">Color <span class="valbox"></span></div>
           <div class="dragtarget" id="lattice-x-target">Lattice X <span class="valbox"></span></div>
           <div class="dragtarget" id="lattice-y-target">Lattice Y <span class="valbox"></span></div>
@@ -89,15 +108,9 @@
       </div>
 
 
-        <div class="span6">
-          <div class="hero-unit">
-            <h1></h1>
-            <div id="imagearea">
-              
-            <p><img id="the-graph-image"/></p>
-            </div>
-            <p><a class="btn btn-primary btn-large">share</a></p>
-          </div><!--/row-->
+        <div class="span8">
+          <div id="imagearea"></div>
+          <p><a class="btn btn-primary btn-large">share</a></p>
         </div><!--/span-->
     </div><!--/row-->
 
@@ -118,15 +131,6 @@
   <script src="js/plugins.js"></script>
   <script src="js/script.js"></script>
   <!-- end scripts -->
-
-  <!-- Asynchronous Google Analytics snippet. Change UA-XXXXX-X to be your site's ID.
-       mathiasbynens.be/notes/async-analytics-snippet -->
-  <script>
-    var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
-    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-    g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
-    s.parentNode.insertBefore(g,s)}(document,'script'));
-  </script>
   
   <script>
     $(document).ready(function() {
@@ -134,21 +138,45 @@
     });
     
     function makeattrmenu() {
-      $.getJSON("data/beta_ui-variables.json", function(variables) {
+      $.getJSON("data/desktop_heatmap_2012_variables.json", function(varJson) {
         console.log("I got the variables file");
-        $.getJSON("data/beta_ui-data-users.json", function(userData) {
+        $.getJSON("data/desktop_heatmap_2012_users.json", function(userData) {
           console.log("I got the users file");
           var menu = $("#variables_menu");
           menu.empty();
+          var variables = varJson.variablez;
+          var eventNames = varJson.event_names;
           $.each(variables, function(key, val) {
             var newItem = $('<li></li>');
-            newItem.addClass([val.datatype].join(' ')).html(val.name).attr("id", "var_" + val.id);
+            newItem.addClass([val.datatype].join(' ')).html(val.name).attr("variable", val.id);
             newItem.on("mouseover", function() {
               $("#output").html(val.description);
             });
+
+            // add popup menu
+            if (val.customizable == "event_names") {
+              var select = $('<select></select>');
+              for (var e in eventNames) {
+                select.append($('<option>' + eventNames[e] + '</option>'));
+              }
+              select.addClass("event_names_select");
+              select.bind("change", function(e) { console.log('You pickd ' + select.val()); });
+              newItem.append(select);
+            }
+            
             menu.append(newItem);
           });
-         initDragGui(variables, userData);
+
+         // dynamically create hidden variables for each event_names:
+         $.each(eventNames, function(key, val) {
+            variables.push( { "datatype": "integer",
+                  "semantics": "per_user",
+                  "id": "numUses_" + val,
+                   "name": "Use Count Of " + val,
+                  "description": "Number of times " + val + " was used."
+                  });
+         });
+         initDragGui(variables, eventNames, userData);
         });
       });
     }

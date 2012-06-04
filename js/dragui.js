@@ -9,18 +9,18 @@ function updateFragment(params) {
 }
 
 function getUrlParams() {
-	var args = {}
-	if (("" +window.location).search("#") != -1) {
-		var params = ("" + window.location).split("#")[1]
-		console.log(params)
-		if (params != "") {
-			params_list = params.split("&")
-			for (var pair in params_list) {
-				args[params_list[pair].split("=")[0]] = params_list[pair].split("=")[1]
-			}
-		}
-	}
-	return args
+  var args = {};
+  if (("" +window.location).search("#") != -1) {
+    var params = ("" + window.location).split("#")[1];
+    console.log(params);
+    if (params != "") {
+      params_list = params.split("&");
+      for (var pair in params_list) {
+	args[params_list[pair].split("=")[0]] = params_list[pair].split("=")[1];
+      }
+    }
+  }
+  return args;
 }
 
 function enoughValsForGraph(params) {
@@ -30,7 +30,7 @@ function enoughValsForGraph(params) {
 	return false;
 }
 
-function initDragGui(variables, userData){
+function initDragGui(variables, eventNames, userData){
 
   function getVarById(varId) {
     for(var x = 0; x < variables.length; x++) {
@@ -60,7 +60,7 @@ function initDragGui(variables, userData){
     } else if (options.variable.semantics == "event_name") {
       $("#output").html("Bars represent the " +
                         countStr + " of users who clicked the given item at least once.");
-      counts = whoDidAtLeastOnce(userData, {colorVar: options.colorVar});
+      counts = whoDidAtLeastOnce(userData, eventNames, {colorVar: options.colorVar});
     } else if (options.variable.datatype == "factor") {
       $("#output").html("Bars represent the " +
                         countStr + " of users with the given " + options.variable.name);
@@ -83,8 +83,8 @@ function initDragGui(variables, userData){
                      width: options.width, height: options.height});
   }
 
-  function eventCountPlot(userData, options) {
-    var counts = totalEventsByItem(userData, {colorVar: options.colorVar});
+  function eventCountPlot(userData, eventNames, options) {
+    var counts = totalEventsByItem(userData, eventNames, {colorVar: options.colorVar});
     $("#output").html("Bars represent number of uses, totalled across all users, for the given item.");
     barplot(counts, {bars: options.bars, caption: options.caption, width: options.width, height: options.height});
   }
@@ -98,7 +98,7 @@ function initDragGui(variables, userData){
     }
 
     var chartWidth = parseInt(d3.select("#imagearea").style("width").replace("px", ""));
-    var chartHeight = 600; // TODO totally arbitrary number
+    var chartHeight = $(document).height() - 180; // TODO 180 is a totally arbitrary number
 
     var dataSets, latticeVar, dataSetName;
     if (params["lattice-x"]) {
@@ -144,12 +144,12 @@ function initDragGui(variables, userData){
       // TODO actually more useful as scatter plot where each dot is a user and one axis
       // is number of events that user had in that category?
       if ( yVar.semantics == "event_name" && xVar.semantics == "event_count") {
-        eventCountPlot(dataSets[dataSetName], {bars: "horizontal", caption: latticeLabel,
+        eventCountPlot(dataSets[dataSetName], eventNames, {bars: "horizontal", caption: latticeLabel,
                                                width: chartWidth, height: chartHeight, colorVar: colorVar});
         continue;
       }
       if ( xVar.semantics == "event_name" && yVar.semantics == "event_count") {
-        eventCountPlot(dataSets[dataSetName], {bars: "vertical", caption: latticeLabel,
+        eventCountPlot(dataSets[dataSetName], eventNames, {bars: "vertical", caption: latticeLabel,
                                                width: chartWidth, height: chartHeight, colorVar: colorVar});
         continue;
       }
@@ -204,45 +204,96 @@ function initDragGui(variables, userData){
     return false;
   }
 
-  
+
   var params = {};
   var assignments = {};
 
-  initialVals = getUrlParams();
+  var initialVals = getUrlParams();
   if (enoughValsForGraph(initialVals)) {
-	drawNewGraph(initialVals)
-	for (val in initialVals) {
-		$("#" + val + "-target").find(".valbox").html(getVarById(initialVals[val]).name);
-		var problem = detectBadAssignment(getVarById(initialVals[val]), val, initialVals);
-	    if (problem) {
-	       $("#output").html(problem);
-	       return;
-	    }
-		assignments[getVarById(initialVals[val]).name] = val
-		
-		//initialize these values in params
-		params[val] = initialVals[val]
-	}
+    drawNewGraph(initialVals);
+    for (val in initialVals) {
+      var valbox = $("#" + val + "-target").find(".valbox");
+      valbox.html(getVarById(initialVals[val]).name);
+      valbox.attr("variable", initialVals[val]);
+      var problem = detectBadAssignment(getVarById(initialVals[val]), val, initialVals);
+      if (problem) {
+	$("#output").html(problem);
+	return;
+      }
+      assignments[getVarById(initialVals[val]).name] = val;
+
+      //initialize these values in params
+      params[val] = initialVals[val];
+    }
   }
-  
-  var items = $("#variables_menu").find("li");
-  items.draggable({opacity: 0.7,
-                   helper: "clone" });
+
+  function outsideDropTargets(x, y) {
+    var div = $("#drop-targets-container");
+    var left = div.position().left;
+    var top = div.position().top;
+    var right = left + div.width();
+    var bottom = top + div.height();
+    return (x < left || x > right || y < top || y > bottom);
+  }
+
+  function unAssignVariable(varId) {
+    // TODO is there any good reason the assignments[] keys hvae to be variableNames instead of
+    // variableIds?
+    if (varId && varId!= "") {
+      var name = getVarById(varId).name;
+      if (name in assignments) {
+        var role = assignments[name];
+        delete params[role];
+      	delete assignments[name];
+      }
+    }
+  }
+
+  // Make Things Draggable:
+  $("#variables_menu").find("li").draggable({opacity: 0.7,
+                                             helper: "clone" });
+
+  $("div.dragtarget").find(".valbox").draggable({opacity: 0.7,
+                                                 helper: "clone",
+                                                 // Unassign variable if you drag it out of the box:
+                                                 stop: function(e, ui)  {
+                                                   if (outsideDropTargets(e.pageX, e.pageY)) {
+                                                     unAssignVariable($(this).attr("variable"));
+                                                     $(this).empty();
+                                                     // TODO this stuff below is duplicated, factor out
+                                                     updateFragment(params);
+                                                     if (enoughValsForGraph(params)) {
+                                                       $("#imagearea").empty();
+                                                       drawNewGraph(params);
+                                                     }
+                                                   }
+                                                 }});
 
   $( ".dragtarget" ).droppable({
+    hoverClass: "dragtarget-hover",
     drop: function( event, ui ) {
-      var variableName = ui.draggable.html();
-      var variableId = ui.draggable.attr("id").split("var_")[1];
+      // OK so the object being dropped might be an original variable assignment from the left
+      // column or it might be a re-assignment from another slot in the right column. First thing
+      // we need to do is distinguish which it is... or maybe not...
+      var variableId = ui.draggable.attr("variable");
       var variableRole = $(this).attr("id").split("-target")[0];
-	
-      // check if type is ok for role assignment:  
-	  var problem = detectBadAssignment(getVarById(variableId), variableRole, params);
+
+      // Check if it's a customizable variable; if so, complete its id by checking the menu setting:
+      if (getVarById(variableId).customizable == "event_names") {
+        var menuSetting = ui.draggable.find(".event_names_select").first().val();
+        variableId = variableId + menuSetting;
+      }
+
+      var variableName = getVarById(variableId).name;
+
+      // check if type is ok for role assignment:
+      var problem = detectBadAssignment(getVarById(variableId), variableRole, params);
       if (problem) {
         $("#output").html(problem);
         return;
       }
 
-	  var oldValinRole = params[variableRole];
+      var oldValinRole = params[variableRole];
       var oldRole = assignments[variableName];
       if (oldRole) {
         // TODO if the swapping would create an invalid assignment, just drop the old one
@@ -258,11 +309,14 @@ function initDragGui(variables, userData){
           params[oldRole] = null;
         }
       }
+      // TODO assignment code here is shared with the initial val assignments from url params --
+      // factor that out.
       $(this).find(".valbox").html(variableName);
+      $(this).find(".valbox").attr("variable", variableId);
       if (oldValinRole in assignments) {
       	delete assignments[getVarById(oldValinRole).name];
-      }	
-	  assignments[variableName] = variableRole;
+      }
+      assignments[variableName] = variableRole;
       params[variableRole] = variableId;
 
       updateFragment(params);
@@ -277,7 +331,7 @@ function initDragGui(variables, userData){
 
     // TODO need to manually do the thing that jquery UI draggable was doing for us
     // TODO maybe refactor out some of the stuff above into an "assign var" function,
-    // use that here.  
+    // use that here.
 }
 
 // TODO should be able to drag a variable from its placement after it has been placed.

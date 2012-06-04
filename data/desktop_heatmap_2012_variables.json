@@ -1,0 +1,239 @@
+{"variablez": [
+  {
+    "datatype": "fraction", 
+    "semantics": "user",
+    "url": "", 
+    "id": "pct_users", 
+    "name": "Percentage of Users", 
+    "description": "What percentage of users were in this category?"
+  },
+  {
+    "datatype": "integer",
+    "semantics": "user",
+    "url": "", 
+    "id": "num_users", 
+    "name": "Number of Users", 
+    "description": "What total number of users was in this category?"
+  },
+  {
+    "datatype": "factor",
+    "semantics": "event_name",
+    "url": "", 
+    "id": "item", 
+    "name": "All UI items",
+    "description": "Name of the toolbar button or menu item used."
+  },
+  {
+    "datatype": "integer",
+    "semantics": "per_user",
+    "url": "",
+    "id": "numUses_",
+    "name": "Use Count Of: ",
+    "customizable": "event_names",
+    "description": "Number of times selected item was used."
+  },
+  {
+    "datatype": "integer",
+    "semantics": "event_count",
+    "url": "", 
+    "id": "num_actions", 
+    "name": "Number of Actions", 
+    "description": "Number of times UI item was used."
+  },
+  {
+    "datatype": "factor",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "operatingSystem", 
+    "name": "Operating System", 
+    "description": "Was the user on Windows, Mac, or Linux?"
+  },
+  {
+    "datatype": "factor",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "fxVersion", 
+    "name": "Firefox Version", 
+    "description": "What version of Firefox was the user running?"
+  },
+  {
+    "datatype": "integer",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "number_extensions", 
+    "name": "Number of Extensions", 
+    "description": "How many extensions did this user have?"
+  },
+  {
+    "datatype": "factor",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "location", 
+    "name": "Locale", 
+    "description": "What was the user's Firefox locale setting?"
+  },
+  {
+    "datatype": "factor",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "menu_bar_hidden",
+    "name": "Menu bar setting", 
+    "description": "Did the user have the menu bar shown or hidden?"
+  },
+  {
+    "datatype": "factor",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "bookmark_bar_hidden", 
+    "name": "Bookmark bar setting", 
+    "description": "Did the user have the bookmarks bar shown or hidden?"
+  },
+  {
+    "datatype": "factor",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "tabs_on_top", 
+    "name": "Tab bar setting",
+    "description": "Did the user have tabs on the top or on the bottom?"
+  },
+ {
+    "datatype": "integer",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "num_app_tabs", 
+    "name": "Number of App Tabs", 
+    "description": "How many app tab did the user pin?"
+  },
+  {
+    "datatype": "factor",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "addon_bar_hidden",
+    "name": "Addon bar setting", 
+    "description": "Did the user have the addon bar shown or hidden?"
+  },
+  {
+    "datatype": "factor",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "sync_configured",
+    "name": "Sync configured", 
+    "description": "Did the user set up Sync?"
+  },
+  {
+    "datatype": "factor",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "updateChannel", 
+    "name": "Update Channel", 
+    "description": "Nightly, Aurora, Beta, or final Firefox release?"
+  },
+  {
+    "datatype": "integer",
+    "semantics": "per_user",
+    "url": "", 
+    "id": "num_bookmarks_in_bar", 
+    "name": "Number of Bookmarks in Bar", 
+    "description": "How many bookmarks did the user have in their bookmark bar?"
+  },
+  {
+    "datatype": "factor",
+    "semantics": "per_user", 
+    "url": "", 
+    "id": "tpVersion", 
+    "name": "Test Pilot version",
+    "description": "Version number of Test Pilot extension"
+  },
+  {
+    "datatype": "integer",
+    "semantics": "per_user", 
+    "url": "",
+    "id": "num_tabs_in_window",
+    "name": "Tabs per window",
+    "description": "Number of tabs in one window (needs work)"
+  },
+  {
+    "datatype": "integer",
+    "semantics": "per_user", 
+    "url": "",
+    "id": "num_panorama_groups",
+    "name": "Panorama Groups",
+    "description": "Number of groups in Panorama"
+  }
+],
+
+"event_names": [
+"back-button",
+"forward-button",
+"urlbar",
+"urlbar-stop-button",
+"urlbar-go-button",
+"urlbar-reload-button",
+"search-engine-dropdown",
+"searchbar",
+"home-button",
+"rss-icon",
+"star-button",
+"feed-button",
+"Panorama",
+
+"tabbar",
+"alltabs-popup",
+"tabview-button",
+
+"bookmark-toolbar",
+"bookmarks-menu-button",
+"bookmarks-button",
+
+"site-id-button",
+"identity-popup-more-info-button",
+"about?home",
+"fullscreen-button",
+
+"appmenu-button",
+"appmenu-popup",
+"appmenu_webDeveloper_popup",
+"appmenu_customizeMenu",
+"appmenu_historyMenupopup",
+"appmenu_bookmarksPopup",
+
+"menus",
+"file-menu",
+"menu_FilePopup",
+"edit-menu",
+"menu_EditPopup",
+"view-menu",
+"viewToolbarsMenu",
+"history-menu",
+"historyUndoMenu",
+"bookmarksMenu",
+"bookmarksMenuPopup",
+"menu_ToolsPopup",
+"menuWebDeveloperPopup",
+"webDeveloperMenu",
+"windowMenu",
+
+"historyUndoWindowMenu",
+"toolbar-context-menu",
+"webdeveloper-disable-menu",
+"tools-menu",
+
+"menu_viewPopup",
+"menu_HelpPopup",
+"pageStyleMenu",
+"bookmarksToolbarFolderMenu",
+"charsetMenu",
+"helpMenu",
+
+"vertical-scrollbar",
+"horizontal-scrollbar",
+"window",
+
+"contentAreaContextMenu",
+"tabContextMenu",
+"tab-context-menu",
+"downloadsContextMenu"
+]
+}
+
+

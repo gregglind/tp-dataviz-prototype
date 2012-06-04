@@ -8,25 +8,8 @@
 //   treat "factor with small # of values" different from "factor with large # of values"
 
 //  for lattice, x and y have to be the same axes for all, so find max over all and use that
-//  to determine axes for all
+//  to determine axes for alluse http
  */
-
-
-// TODO:
-// Make page apply parameters from URL when first loaded!
-// Heatmapper page
-//
-// Latticing: share axes between lattice charts!!  And allow a second lattice variable choice...
-// Bar chart with percent axis and colors: currently showing percentage of all users, but should
-// it show percentage of same-color users?
-// When latticing and coloring: there's currently no guarantee the same color means the same thing
-// across all subcharts... this is related to sharing of axes; generate color list and axes min/max
-// outside of the lattice loop.
-// Add option of "particular event count" as a special user-level variable
-// Additional options such as logarithmic scale, regression line, or violin-plot
-// Make share button do something
-// When coloring, generate key for what each color means.
-// Add ability to *remove* a variable assignment!
 
 
 /* To do latticing:
@@ -64,18 +47,22 @@ function latticificate(userData, latticeVar) {
 
 
 function makeChart(options) {
-  var margin = 40;
+  var leftMargin = 5;
+  var topMargin = 5;
+  var rightMargin = 105;
+  var bottomMargin = 105;
 
-  var chartWidth = options.chartWidth - 2 * margin;
-  var chartHeight = options.chartHeight - 2 * margin;
+  var chartWidth = options.chartWidth - leftMargin - rightMargin;
+  var chartHeight = options.chartHeight - topMargin - bottomMargin;
 
   var chart = d3.select("#imagearea").append("svg:svg")
-    .attr("width", chartWidth + 2 * margin)
-    .attr("height", chartHeight + 2 * margin)
+    .attr("width", chartWidth + leftMargin + rightMargin)
+    .attr("height", chartHeight + topMargin + bottomMargin)
     .attr("class", "chart")
-    .append("svg:g").attr("transform", "translate(" + margin +  ", " + margin + ")");
+    .append("svg:g").attr("transform", "translate(" + leftMargin +  ", " + topMargin + ")");
 
   if (options.caption) {
+    // TODO this needs to go higher up...
     chart.append("svg:text")
       .attr("x", chartWidth/2 - 20)
       .attr("y", 20)
@@ -99,7 +86,10 @@ function scatterplot(userData, xVar, yVar, options) {
     if (xVar.semantics == "event_count") {
       return parseInt(record["numEvents"]);
     }
-    var newX = record[ xVar.id ];
+    var newX = 0;  // default to 0 if user data record has no matching property
+    if (record[ xVar.id ] != undefined) {
+      newX = record[ xVar.id ];
+    }
     if (xVar.datatype != "factor") {
       newX = parseFloat(newX);
     }
@@ -110,7 +100,10 @@ function scatterplot(userData, xVar, yVar, options) {
     if (yVar.semantics == "event_count") {
       return parseInt(record["numEvents"]);
     }
-    var newY = record[ yVar.id ];
+    var newY = 0;
+    if (record[ yVar.id ] != undefined) {
+      newY = record[ yVar.id ];
+    }
     if (yVar.datatype != "factor") {
       newY = parseFloat(newY);
     }
@@ -198,13 +191,13 @@ function scatterplot(userData, xVar, yVar, options) {
 
   // Add the x-axis:
   chart.append("svg:g")
-      .attr("class", "x axis")
+      .attr("class", "x-axis")
       .attr("transform", "translate(0, " + chartHeight + ")")
       .call(xAxis);
 
   // Add the y-axis.
   chart.append("svg:g")
-      .attr("class", "y axis")
+      .attr("class", "y-axis")
       .attr("transform", "translate(" + chartWidth + ",0)")
       .call(yAxis);
 
@@ -280,9 +273,8 @@ function toCountsAndLabels(colorDictionary) {
   return {counts: counts, labels: labels, colors: colors};
 }
 
-
-function doForEachUser(userData, options) {
-  //varId, varCallback, eventCountCallback) {
+function countFactors(userData, options) {
+  var factorValueCounts = {};  // will be key = factor name, value = count
 
   for (var i =0; i < userData.length; i++) {
     var user = userData[i];
@@ -291,120 +283,171 @@ function doForEachUser(userData, options) {
     if (options.colorVar) {
       color = userData[i][ options.colorVar.id ];
     }
-
-    if (options.varId) {
-      var value = userData[i][ options.varId ];
-      options.varCallback(value, color);
-    }
-
-    if (options.eventCountCallback) {
-      for (var prop in user) {
-        if (prop.indexOf("numEvents_item") > -1) {
-          var eventName = prop.split("=")[1];
-          var numEvents = parseInt(user[prop]);
-          options.eventCountCallback(eventName, numEvents, color);
-        }
-      }
-    }
-  }
-}
-
-function countFactors(userData, options) {
-  var factorValueCounts = {};  // will be key = factor name, value = count
-  function addCount(val, color) { // helper function for counts dictionary
     if (!factorValueCounts[color]) {
       factorValueCounts[color] = {};
     }
 
-    if (factorValueCounts[color][val]) {
-      factorValueCounts[color][val] += 1;
-    } else {
-      factorValueCounts[color][val] = 1;
+    if (options.varId) {
+      var val = userData[i][ options.varId ];
+      if (factorValueCounts[color][val]) {
+        factorValueCounts[color][val] += 1;
+      } else {
+        factorValueCounts[color][val] = 1;
+      }
     }
   }
-
-  doForEachUser(userData, { varId: options.varId, varCallback: addCount, colorVar: options.colorVar});
 
   return toCountsAndLabels(factorValueCounts);
 }
 
-function whoDidAtLeastOnce(userData, options) {
-  // for each event, count users who did that event at least once
+function whoDidAtLeastOnce(userData, eventNames, options) {
+  // for each event listed in eventNames, count users who did that event at least once
   var eventCounts = {};
 
-  doForEachUser(userData, { eventCountCallback: function(eventName, numEvents, color) {
-                                  if (!eventCounts[color]) {
-                                    eventCounts[color] = {};
-                                  }
+  for (var i =0; i < userData.length; i++) {
+    var user = userData[i];
 
-                                      if (numEvents > 0) {
-                                        if (eventCounts[color][eventName]) {
-                                          eventCounts[color][eventName] += 1;
-                                        } else {
-                                          eventCounts[color][eventName] = 1;
-                                        }
-                                      }
-                            }, colorVar: options.colorVar});
+    var color = "everybody";
+    if (options.colorVar) {
+      color = userData[i][ options.colorVar.id ];
+    }
+    if (!eventCounts[color]) {
+      eventCounts[color] = {};
+    }
+
+    for (var e in eventNames) {
+      var eventName = eventNames[e];
+      var propName = "numUses_" + eventName;
+      if (user[propName] != undefined) {
+        if (parseInt(user[propName]) > 0) {
+          if (eventCounts[color][eventName]) {
+            eventCounts[color][eventName] += 1;
+          } else {
+            eventCounts[color][eventName] = 1;
+          }
+        }
+      }
+    }
+  }
 
   return toCountsAndLabels(eventCounts);
 }
 
-function totalEventsByItem(userData, options) {
+function totalEventsByItem(userData, eventNames, options) {
+  // for each event, count total number of uses of that event across all users
+  // TODO not very useful, should be mean or median
+  // TODO a lot of duplciated code with whoUsedAtLeastOnce.
   var eventCounts = {};
-  doForEachUser(userData, { eventCountCallback: function(eventName, numEvents, color) {
-                              if (!eventCounts[color]) {
-                                eventCounts[color] = {};
-                              }
 
-                              if (eventCounts[color][eventName]) {
-                                eventCounts[color][eventName] += numEvents;
-                              } else {
-                                eventCounts[color][eventName] = numEvents;
-                              }
-        }, colorVar: options.colorVar});
+  for (var i =0; i < userData.length; i++) {
+    var user = userData[i];
+
+    var color = "everybody";
+    if (options.colorVar) {
+      color = userData[i][ options.colorVar.id ];
+    }
+    if (!eventCounts[color]) {
+      eventCounts[color] = {};
+    }
+
+    for (var e in eventNames) {
+      var eventName = eventNames[e];
+      var propName = "numUses_" + eventName;
+      if (user[propName] != undefined) {
+        var numUses = parseInt(user[propName]);
+        if (eventCounts[color][eventName]) {
+          eventCounts[color][eventName] += numUses;
+        } else {
+          eventCounts[color][eventName] = numUses;
+        }
+      }
+    }
+  }
 
   return toCountsAndLabels(eventCounts);
+}
+
+
+function createHistogramBuckets(userData, options) {
+  var numBuckets = 15; // TODO make this customizable
+
+  var values = [];
+  // Create sorted list of values:
+  for (var i = 0; i < userData.length; i++) {
+    if (userData[i][ options.varId ] == undefined) {
+      values.push(0);
+    } else {
+      values.push( parseInt(userData[i][ options.varId ]) );
+    }
+  }
+  values = values.sort(function(a, b) { return a - b; });
+
+  var numUsers = userData.length;
+  var onePercent = Math.floor(numUsers / 50);
+  if (onePercent < 1) onePercent = 1; // zero will screw up the outlier collection
+
+  // Start at the top end, collect outliers until we have 1% of users
+  var outlierThreshold = values[ values.length - onePercent ];
+  var breakpoints = [];
+  var min = values[0];
+  // if we have 0s, create a 0 bucket - that will usually be a useful thing to see.
+  if (min == 0) {
+    breakpoints.push(0);
+    min = 1;
+  }
+
+  var max = values[ values.length - 1 ];
+  // calcuate bucket breakpoints (Math.floored to nearest integer)
+  var bucketWidth;
+  if ( (outlierThreshold - min) < 5) {
+    // don't consoidate outliers if it would reduce our number of buckets to something silly
+    outlierThreshold = max;
+  }
+
+  if ((outlierThreshold - min) < numBuckets) {
+    // (if max - min is less than 15 then having 15 buckets will produce duplicate buckets!!
+    //  in this case, reduce number of buckets!)
+    numBuckets = (outlierThreshold - min);
+    bucketWidth = 1;
+  } else {
+    // round off bucket width to a whole number, so all breakpoints will be whole numbers,
+    // equally spaced
+    bucketWidth = Math.floor((outlierThreshold - min)/numBuckets);
+  }
+  for (var j = 0; j < numBuckets; j++) {
+    breakpoints.push( min +  j * bucketWidth);
+  }
+  // last bucket contains everything from outlierThreshold -> maximum
+  breakpoints.push(max);
+
+  return breakpoints;
 }
 
 function histogramify(userData, options) {
+  console.log("Histogramify.");
   var labels = [];
   var colorBucketCounts = {};
-  var min = null, max = null;
-  var numBuckets = 15; // TODO make this customizable
 
-  function compareMinMax(value) {
-    if (min == null) {
-      min = parseFloat(value);
-    } else if (value < min) {
-      min = parseFloat(value);
+  var breakpoints = createHistogramBuckets(userData, options);
+  console.log("Breakpoints are " + breakpoints);
+  var numBuckets = breakpoints.length - 1;
+
+  for (var b = 0; b < numBuckets; b++) {
+    if (breakpoints[b] == breakpoints[b+1] - 1) {
+      // if bucket has a range of 1, just show that one number
+      labels.push("" + breakpoints[b]);
+    } else {
+      // otherwise show min and max of bucket
+      labels.push(breakpoints[b] + " - " + (breakpoints[b+1] - 1));
     }
-    if (max == null) {
-      max = parseFloat(value);
-    } else if (value > max) {
-      max = parseFloat(value);
-    }
   }
-
-  // find min and max values:
-  for (var i = 0; i < userData.length; i++) {
-    compareMinMax( userData[i][ options.varId ] );
-  }
-
-  // calcuate bucket breakpoints
-  // TODO it's weird to have fractional breakpoints if variable is an integer!!
-  var breakpoints = [];
-  var bucketWidth = (max - min)/numBuckets;
-  for (var j = 0; j < numBuckets; j++) {
-    breakpoints.push( min +  j * bucketWidth);
-    // control number of sig figs when float is written out
-    var name = (min + j * bucketWidth).toFixed(1) + " - " + (min + (j+1) * bucketWidth).toFixed(1);
-    labels.push(name);
-  }
-  breakpoints.push(max);
 
   // go through a second time, create bucket counts
   for (var i = 0; i < userData.length; i++) {
-    var val = userData[i][ options.varId ];
+    var val = 0; // default to 0 if user data record has no matching property
+    if (userData[i][ options.varId ] != undefined) {
+      val = userData[i][ options.varId ];
+    }
     // All data will be in 'blah' if there is no colorVar
     var color = "blah";
     if (options.colorVar) {
@@ -419,7 +462,7 @@ function histogramify(userData, options) {
     }
     // do the actual bucketing of users:
     for (var j = 0; j < numBuckets; j++) {
-      if (val < (min + (j+1) * bucketWidth) ) {
+      if (val < breakpoints[j+1] ) {
         colorBucketCounts[color][j] ++;
         break;
       }
@@ -482,6 +525,7 @@ function barplot(data, options) {
   }
 
   // Ordinal scale:
+  // (TODO to set the order, sort labelsForD3 before passing into .domain().)
   var barWidth = d3.scale.ordinal()
     .domain(labelsForD3)
     .rangeBands([0, (horizBars? chartHeight: chartWidth)]);
@@ -494,10 +538,10 @@ function barplot(data, options) {
   }
 
   var xAxis = chart.append("svg:g")
-    .attr("class", "x axis")
+    .attr("class", "x-axis")
     .attr("transform", "translate(0, " + chartHeight + ")");
   var yAxis = chart.append("svg:g")
-    .attr("class", "y axis")
+    .attr("class", "y-axis")
     .attr("transform", "translate(" + chartWidth + ",0)");
 
   if (horizBars) {
@@ -533,27 +577,26 @@ function barplot(data, options) {
       .attr("class", colorMap);
   }
 
-  // Text goes outside the chart so as not to be upside-down
-  /*var texties = container.selectAll("text")
-   .data(dataForD3)
- .enter().append("svg:text")
-   .attr("dx", -3) // padding-right
-   .attr("dy", ".35em") // vertical-align: middle
-   .attr("text-anchor", "end") // text-align: right
-   .text(function(d, i) {return labelsForD3[i];});
-
-  if (horizBars) {
-    texties.attr("x", leftMargin)
-      .attr("y", function(d, i) {return chartHeight - (i * barWidth + barWidth/2);});
-  } else {
-    // ROTATE LABELS
-    texties.attr("x", function(d, i) {return i * barWidth + barWidth/2 + leftMargin;})
-      .attr("y", chartHeight)
-      .attr("transform", function(d, i) {
-              return "rotate( -45 " + (i * barWidth + barWidth/2 + leftMargin) + "," + chartHeight + ")";
-            });
+  // Rotate the x-axis labels if there are a lot of them:
+  // TODO >15 is a totally arbitrary number! should count characters in all labels/longest label
+  // to gauge readability.  also it should depend on chartwidth.
+// chartwidth < 300 means max length should be 7
+// chartwidth of like 600 means max length should be like 15
+  console.log("rotate labels? chartWidth is " + chartWidth);
+  if (labelsForD3.length > chartWidth * 7 / 300) {
+    console.log("Rotating Labels!");
+    var offset = (-1) * (barWidth.rangeBand()/2 - 5); // TODO this needs tweaking
+    d3.selectAll(".x-axis").selectAll("text").attr("text-anchor", "end")
+      .attr("transform", "rotate(-90) translate(0 " + offset + ")");
   }
-  */
+
+  // Show tooltips on hover!
+  // TODO change the sentence here based on the type of graph.
+  // percentage axis: "x % of users have..."
+  // numeric axis: "there are x users with..."
+  // histogram: "...between y and z things"
+  // factors: "...a y value of z"
+  bars.append("svg:title").text(function(d, i) {return "There are " + d + " between " + labelsForD3[i];});
 
 }
 

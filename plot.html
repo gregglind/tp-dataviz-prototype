@@ -57,7 +57,7 @@
           <div class="nav-collapse">
             <ul class="nav">
               <li class="active"><a href="#">Chart Builder</a></li>
-              <li class="active"><a href="#">Please send bug reports to jono@mozilla.com</a></li>
+              <li class="active"><a href="#">Please send bug reports to isegall@mozilla.com</a></li>
             </ul>
             <p class="navbar-text pull-right">Logged in as <a href="#">UX</a></p>
           </div><!--/.nav-collapse -->
@@ -79,10 +79,6 @@
 
         <div class="span2" id="drop-targets-container">
           <div class="dragtarget" id="x-axis-target">X-axis <span class="valbox"></span>
-            <span id="x-axis-scale">Scale: <select id="x-axis-scale-menu">
-              <option>Linear</option>
-              <option>Logarithmic</option>
-            </select></span>
             <span id="x-axis-sort">Sorted by: <select id="x-axis-sort">
               <option>Default</option>
               <option>Most to Least</option>
@@ -90,10 +86,6 @@
             </select></span>
           </div>
           <div class="dragtarget" id="y-axis-target">Y-axis <span class="valbox"></span>
-            <span id="y-axis-scale">Scale: <select id="y-axis-scale">
-              <option>Linear</option>
-              <option>Logarithmic</option>
-            </select></span>
             <span id="y-axis-sort">Sorted by: <select id="y-axis-sort">
               <option>Default</option>
               <option>Most to Least</option>
@@ -110,6 +102,14 @@
 
         <div class="span8">
           <div id="imagearea"></div>
+          <span id="x-axis-scale">Scale: <select id="x-axis-scale-menu" style = "display:none" >
+              <option value = "linear">Linear</option>
+              <option value = "log">Logarithmic</option>
+            </select></span>
+              <span id="y-axis-scale">Scale: <select id="y-axis-scale-menu" style = "display:none">
+              <option value = "linear">Linear</option>
+              <option value = "log">Logarithmic</option>
+            </select></span>
           <p><a class="btn btn-primary btn-large">share</a></p>
         </div><!--/span-->
     </div><!--/row-->

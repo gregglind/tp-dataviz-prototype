@@ -12,7 +12,6 @@ function getUrlParams() {
   var args = {};
   if (("" +window.location).search("#") != -1) {
     var params = ("" + window.location).split("#")[1];
-    console.log(params);
     if (params != "") {
       params_list = params.split("&");
       for (var pair in params_list) {
@@ -93,8 +92,17 @@ function initDragGui(variables, eventNames, userData){
     var xVar = getVarById(params["x-axis"]);
     var yVar = getVarById(params["y-axis"]);
     var colorVar = null;
+    var xscale = null;
+    var yscale = null;
     if (params["color"]) {
       colorVar = getVarById(params["color"]);
+    }
+    if (params["x-scale"]) {
+    	xscale = params["x-scale"]
+    }
+    if (params["y-scale"]) {
+    	yscale = params["y-scale"]
+
     }
 
     var chartWidth = parseInt(d3.select("#imagearea").style("width").replace("px", ""));
@@ -118,6 +126,17 @@ function initDragGui(variables, eventNames, userData){
       // Invalid!  This should never happen since it should be caught by detectBadAssignment
       return;
     }
+
+	if (xVar.datatype != "integer" && xVar.datatype != "fraction") {
+	     $("#x-axis-scale-menu").hide()
+	  } else {
+	  	     $("#x-axis-scale-menu").show()
+	  }
+	   if (yVar.datatype != "integer" && yVar.datatype != "fraction") {
+	  	$("#y-axis-scale-menu").hide()
+	  } else {
+	  	     $("#y-axis-scale-menu").show()
+	  }
 
     // Plot each data set in its own lattice mini-graph:
     for (dataSetName in dataSets) {
@@ -157,8 +176,10 @@ function initDragGui(variables, eventNames, userData){
       // All other cases use scatterplot.
       // TODO every category-based scatter plot needs a violin-plot option; number vs. number
       // scatter plot needs a regression line option.
+		
       scatterplot(dataSets[dataSetName], xVar, yVar, {colorVar: colorVar, caption: latticeLabel,
-                                                      width: chartWidth, height: chartWidth});
+                                                      width: chartWidth, height: chartWidth, 
+                                                      x_scale: xscale, y_scale:yscale});
     }
   }
 
@@ -212,19 +233,27 @@ function initDragGui(variables, eventNames, userData){
   if (enoughValsForGraph(initialVals)) {
     drawNewGraph(initialVals);
     for (val in initialVals) {
-      var valbox = $("#" + val + "-target").find(".valbox");
-      valbox.html(getVarById(initialVals[val]).name);
-      valbox.attr("variable", initialVals[val]);
-      var problem = detectBadAssignment(getVarById(initialVals[val]), val, initialVals);
-      if (problem) {
-	$("#output").html(problem);
-	return;
-      }
-      assignments[getVarById(initialVals[val]).name] = val;
-
+      if (val == "x-axis" || val == "y-axis") {
+	      var valbox = $("#" + val + "-target").find(".valbox");
+	      valbox.html(getVarById(initialVals[val]).name);
+	      valbox.attr("variable", initialVals[val]);
+	      var problem = detectBadAssignment(getVarById(initialVals[val]), val, initialVals);
+	      if (problem) {
+		$("#output").html(problem);
+		return;
+	      }
+       assignments[getVarById(initialVals[val]).name] = val;
+		}
       //initialize these values in params
-      params[val] = initialVals[val];
-    }
+	  	else if (val == "x-scale") {
+	  		$("#x-axis-scale-menu").val(initialVals[val])
+	  	}
+	  	else if (val == "y-scale") {
+	  		$("#y-axis-scale-menu").val(initialVals[val])
+	  	}
+	  	params[val] = initialVals[val];
+
+  	}
   }
 
   function outsideDropTargets(x, y) {
@@ -249,6 +278,22 @@ function initDragGui(variables, eventNames, userData){
     }
   }
 
+  function reload_graph(param_key, new_value) {
+  	params[param_key] = new_value;
+  	updateFragment(params);
+  	$("#imagearea").empty();
+  	drawNewGraph(params);
+  }
+
+  //change graph when dropdown changes
+  $("#x-axis-scale-menu").change(function() {
+  		reload_graph("x-scale", $("option:selected", this).val())
+  	});
+  	
+  $("#y-axis-scale-menu").change(function() {
+  		reload_graph("y-scale", $("option:selected", this).val())
+  	});
+  
   // Make Things Draggable:
   $("#variables_menu").find("li").draggable({opacity: 0.7,
                                              helper: "clone" });

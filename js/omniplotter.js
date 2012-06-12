@@ -72,16 +72,31 @@ function makeChart(options) {
   return {chart: chart, chartWidth: chartWidth, chartHeight: chartHeight};
 }
 
+function remove_0s(dataPoints, field) {
+	data_nonzero = []
+	for (entry in dataPoints) {
+		if (field == "x") {
+			if (dataPoints[entry].x != 0) {
+				data_nonzero.push(dataPoints[entry])
+			}
+		}
+		else if (field == "y") {
+			if (dataPoints[entry].y != 0) {
+				data_nonzero.push(dataPoints[entry])
+			}
+		}
+	}
+	return data_nonzero;
+}
 
 function scatterplot(userData, xVar, yVar, options) {
   // Each dot in the scatter plot is a user.
-
+ 
   var {chart, chartWidth, chartHeight} = makeChart({caption: options.caption,
                                                     chartWidth: options.width,
                                                     chartHeight: options.height});
 
   var dataPoints = [];
-
   function getXVarVal(record) {
     if (xVar.semantics == "event_count") {
       return parseInt(record["numEvents"]);
@@ -135,7 +150,6 @@ function scatterplot(userData, xVar, yVar, options) {
       }
     }
   }
-
   if (xVar.datatype == "factor") {
     // Create ordinal scale
     var discreteXVals = {};
@@ -151,10 +165,21 @@ function scatterplot(userData, xVar, yVar, options) {
       .rangeBands([0, chartWidth]);
   } else {
     // Create numerical scale:
-   xScale = d3.scale.linear()
+   if (options["x_scale"] == "log") {
+   	   $("#x-axis-scale-menu").val("log")
+	   dataPoints = remove_0s(dataPoints, "x")
+	   xScale = d3.scale.log()
+	      .domain([d3.min(dataPoints, function(pt) {return pt.x;}),
+	               d3.max(dataPoints, function(pt) { return pt.x;})])
+	      .range([0, chartWidth]);
+  }
+  else {
+  	$("#x-axis-scale-menu").val("linear")
+  	xScale = d3.scale.linear()
       .domain([d3.min(dataPoints, function(pt) {return pt.x;}),
                d3.max(dataPoints, function(pt) { return pt.x;})])
       .range([0, chartWidth]);
+  }
   }
 
   if (yVar.datatype == "factor") {
@@ -172,10 +197,20 @@ function scatterplot(userData, xVar, yVar, options) {
       .rangeBands([0, chartHeight]);
   } else {
     // Create numerical y scale
+    if (options["y_scale"] == "log") {
+       dataPoints = remove_0s(dataPoints, "y")
+
+       yScale = d3.scale.log()
+      .domain([d3.min(dataPoints, function(pt) {return pt.y;}),
+               d3.max(dataPoints, function(pt) { return pt.y;})])
+      .range([chartHeight, 0]);
+    }
+    else {
     yScale = d3.scale.linear()
       .domain([d3.min(dataPoints, function(pt) {return pt.y;}),
                d3.max(dataPoints, function(pt) { return pt.y;})])
       .range([chartHeight, 0]);
+     }
   }
 
   var yAxis = d3.svg.axis()

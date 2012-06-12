@@ -3,6 +3,10 @@
 <style>
 table { min-width: 300px;
 }
+
+html {
+    background-color: #32393E
+  }
 .listing { 
     float: left;
 }
@@ -10,39 +14,51 @@ table { min-width: 300px;
      float: left;
 }
 caption {
-    height: 50px; 
-    text-align: left;
-    border:  
-}                                                                  
+    height: 60px; 
+    text-align: left; 
+    font-family: "Helvetica";
+    padding: 0px;
+
+}
+h3 {
+	text-align: left; 
+    font-family: "Helvetica";
+    padding: 0px;
+    color: white
+}                                                              
 .colorlabel {
-    padding: 5px; 
-    text-align: right; 
-    margin: 0 10 0 0; 
+    padding: 0px; 
+    text-align: left; 
+    margin: 0 5 0 0; 
     display:block;
     color: white;
+    font-family: "Helvetica";
 }
 
 </style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
 <script src="jquery.js"></script>
+<script src="d3.js"></script>
+<script src="colorbrewer.js"></script>
 <script src="make-heatmap.js"></script>
 </head>
 <body onload="loadCanvas();">
 <div  id="picture">
-   <canvas id="the-canvas" width="1000" height="581"></canvas>
+   <canvas id="the-canvas" width="1000" height="1000"></canvas>
 </div>
 
 
 
 <table>
-<caption>
-Total number of hits on each element: 
-</caption>
+	<h3>
+	Percentage using
+	</h3>
 	<script>  	 
 		make_legend()
 	</script> 
 
 </table>
+
 
 
 </body>

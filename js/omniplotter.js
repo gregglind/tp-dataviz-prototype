@@ -541,8 +541,25 @@ function barplot(data, options) {
                                                     chartHeight: options.height});
 
   // TODO should be able to choose linear or logarithmic scale
-  var barLength = d3.scale.linear()
-    .domain([0, d3.max(dataForD3)]);
+  
+  if (options.bar_scale == "log") {
+  	if (horizBars) {
+  		dataForD3 = remove_0s(dataForD3, "x")
+  	}
+  	else {
+  		console.log(dataForD3)
+
+  		dataForD3 = remove_0s(dataForD3, "y")
+  		console.log(dataForD3)
+
+  	}
+	  var barLength = d3.scale.log()
+	    .domain([d3.min(dataForD3), d3.max(dataForD3)]);
+  }
+  else {
+  	var barLength = d3.scale.linear()
+	    .domain([0, d3.max(dataForD3)]);
+  }
   if (horizBars) {
     barLength.range([0, chartWidth]);
   } else {

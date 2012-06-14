@@ -79,13 +79,13 @@ function initDragGui(variables, eventNames, userData){
     }
 
     barplot(counts, {bars: options.bars, axisIsPercent: usePercents, caption: options.caption,
-                     width: options.width, height: options.height});
+                     width: options.width, height: options.height, bar_scale: options.bar_scale});
   }
 
   function eventCountPlot(userData, eventNames, options) {
     var counts = totalEventsByItem(userData, eventNames, {colorVar: options.colorVar});
     $("#output").html("Bars represent number of uses, totalled across all users, for the given item.");
-    barplot(counts, {bars: options.bars, caption: options.caption, width: options.width, height: options.height});
+    barplot(counts, {bars: options.bars, caption: options.caption, width: options.width, height: options.height, bar_scale: options.bar_scale});
   }
 
   function drawNewGraph(params) {
@@ -126,16 +126,17 @@ function initDragGui(variables, eventNames, userData){
       // Invalid!  This should never happen since it should be caught by detectBadAssignment
       return;
     }
-
 	if (xVar.datatype != "integer" && xVar.datatype != "fraction") {
-	     $("#x-axis-scale-menu").hide()
+	     $("#x-axis-scale-menu").attr('disabled', 'disabled');
 	  } else {
-	  	     $("#x-axis-scale-menu").show()
+	  	     $("#x-axis-scale-menu").removeAttr('disabled');
 	  }
 	   if (yVar.datatype != "integer" && yVar.datatype != "fraction") {
-	  	$("#y-axis-scale-menu").hide()
+	  	$("#y-axis-scale-menu").attr('disabled', 'disabled');
 	  } else {
-	  	     $("#y-axis-scale-menu").show()
+	  		console.log(yVar.datatype)
+
+	  	     $("#y-axis-scale-menu").removeAttr('disabled');
 	  }
 
     // Plot each data set in its own lattice mini-graph:
@@ -148,14 +149,14 @@ function initDragGui(variables, eventNames, userData){
       if ( xVar.semantics == "user") {   // and yVar isn't
          someKindOfBarPlot( dataSets[dataSetName],
                             {variable: yVar, counter: xVar, colorVar: colorVar, bars: "horizontal",
-                             caption: latticeLabel, width: chartWidth, height: chartHeight});
+                             caption: latticeLabel, width: chartWidth, height: chartHeight, bar_scale: xscale});
         continue;
       }
 
       if ( yVar.semantics == "user") {
         someKindOfBarPlot( dataSets[dataSetName],
                            {variable: xVar, counter: yVar, colorVar: colorVar, bars: "vertical",
-                            caption: latticeLabel, width: chartWidth, height: chartHeight});
+                            caption: latticeLabel, width: chartWidth, height: chartHeight, bar_scale: yscale});
         continue;
       }
 
@@ -164,12 +165,12 @@ function initDragGui(variables, eventNames, userData){
       // is number of events that user had in that category?
       if ( yVar.semantics == "event_name" && xVar.semantics == "event_count") {
         eventCountPlot(dataSets[dataSetName], eventNames, {bars: "horizontal", caption: latticeLabel,
-                                               width: chartWidth, height: chartHeight, colorVar: colorVar});
+                                               width: chartWidth, height: chartHeight, colorVar: colorVar, bar_scale: xscale});
         continue;
       }
       if ( xVar.semantics == "event_name" && yVar.semantics == "event_count") {
         eventCountPlot(dataSets[dataSetName], eventNames, {bars: "vertical", caption: latticeLabel,
-                                               width: chartWidth, height: chartHeight, colorVar: colorVar});
+                                               width: chartWidth, height: chartHeight, colorVar: colorVar, bar_scale: yscale});
         continue;
       }
 
